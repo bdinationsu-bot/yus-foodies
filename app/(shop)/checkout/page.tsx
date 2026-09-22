@@ -35,24 +35,40 @@ export default function CheckoutPage() {
 
     setLoading(true);
 
-    const { error } = await supabase.from('orders').insert({
+    const orderData = {
       customer_name: name,
       phone: phone,
       address: address,
       payment_method: payment,
       items: items,
       total: getTotal(),
+    };
+
+    const { error } = await supabase.from('orders').insert(orderData);
+
+    if (error) {
+      setLoading(false);
+      alert('Error placing order: ' + error.message);
+      return;
+    }
+
+    await fetch('/api/send-telegram', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name,
+        phone,
+        address,
+        total: getTotal(),
+        items,
+        payment,
+      }),
     });
 
     setLoading(false);
-
-    if (error) {
-      alert('Error placing order: ' + error.message);
-    } else {
-      alert('Order placed successfully! We will contact you soon.');
-      useCartStore.setState({ items: [] });
-      router.push('/');
-    }
+    alert('Order placed successfully! We will contact you soon.');
+    useCartStore.setState({ items: [] });
+    router.push('/');
   };
 
   return (
