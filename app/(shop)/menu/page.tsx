@@ -1,6 +1,5 @@
 'use client';
 
-import Navbar from '@/components/Navbar';
 import ProductCard from '@/components/ProductCard';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -20,7 +19,6 @@ export default function MenuPage() {
 
   return (
     <main className="min-h-screen bg-gray-50">
-      <Navbar />
       <div className="container mx-auto px-4 py-12">
         <h1 className="text-4xl font-bold text-gray-800 mb-8 text-center">Our Snacks Menu</h1>
         {loading ? (

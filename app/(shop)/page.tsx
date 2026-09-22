@@ -1,10 +1,8 @@
-import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-gray-50">
-      <Navbar />
       <div className="container mx-auto px-4 py-20 text-center">
         <h1 className="text-5xl font-bold text-gray-800 mb-6">
           Welcome to Yu's Foodies

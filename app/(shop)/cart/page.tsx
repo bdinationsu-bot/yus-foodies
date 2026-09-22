@@ -1,6 +1,5 @@
 'use client';
 
-import Navbar from '@/components/Navbar';
 import { useCartStore } from '@/store/cart';
 import { Trash2 } from 'lucide-react';
 import Link from 'next/link';
@@ -10,7 +9,6 @@ export default function CartPage() {
 
   return (
     <main className="min-h-screen bg-gray-50">
-      <Navbar />
       <div className="container mx-auto px-4 py-12 max-w-3xl">
         <h1 className="text-4xl font-bold text-gray-800 mb-8">Your Cart</h1>
         
