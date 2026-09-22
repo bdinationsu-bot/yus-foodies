@@ -4,7 +4,7 @@ import { useCartStore } from '@/store/cart';
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { Smartphone, Phone, Copy, Check } from 'lucide-react';
+import { Copy, Check, Phone, Wallet } from 'lucide-react';
 
 export default function CheckoutPage() {
   const { items, getTotal } = useCartStore();
@@ -16,16 +16,8 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const ADMIN_PHONE = '09971234567';
-  const ADMIN_PHONE_DISPLAY = '09 971 234 567';
-
-  const openKPay = () => {
-    window.location.href = 'kpay://';
-  };
-
-  const openWavePay = () => {
-    window.location.href = 'wavepay://';
-  };
+  const ADMIN_PHONE = '09941003460';
+  const ADMIN_PHONE_DISPLAY = '09 941 003 460';
 
   const handleCopy = () => {
     navigator.clipboard.writeText(ADMIN_PHONE);
@@ -108,49 +100,40 @@ export default function CheckoutPage() {
                 <div className="mt-4 p-5 bg-orange-50 border-2 border-orange-300 rounded-lg">
                   <div className="text-center mb-4">
                     <div className="inline-flex items-center justify-center bg-white w-16 h-16 rounded-full shadow-sm mb-3">
-                      <Smartphone size={28} className="text-orange-600" />
+                      <Wallet size={28} className="text-orange-600" />
                     </div>
-                    <h3 className="font-bold text-gray-800 text-lg mb-1">ငွေလွှဲပါ</h3>
-                    <p className="text-3xl font-bold text-orange-600 mb-3">{getTotal()} MMK</p>
+                    <h3 className="font-bold text-gray-800 text-lg mb-1">ငွေလွှဲရန် ပမာဏ</h3>
+                    <p className="text-3xl font-bold text-orange-600">{getTotal()} MMK</p>
                   </div>
 
-                  <div className="space-y-3">
-                    <button
-                      type="button"
-                      onClick={openKPay}
-                      className="w-full bg-blue-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-blue-700 transition flex items-center justify-center gap-2 shadow-md"
-                    >
-                      <Smartphone size={22} /> KPay App ဖွင့်ပါ
-                    </button>
-                    <button
-                      type="button"
-                      onClick={openWavePay}
-                      className="w-full bg-yellow-500 text-white py-4 rounded-lg font-bold text-lg hover:bg-yellow-600 transition flex items-center justify-center gap-2 shadow-md"
-                    >
-                      <Smartphone size={22} /> WavePay App ဖွင့်ပါ
-                    </button>
+                  <div className="bg-white rounded-lg p-4 border-2 border-orange-300">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Phone size={18} className="text-orange-600" />
+                      <p className="text-sm text-gray-700 font-medium">KPay / WavePay ဖုန်းနံပါတ်</p>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-xl font-bold text-gray-800 tracking-wider">{ADMIN_PHONE_DISPLAY}</span>
+                      <button
+                        type="button"
+                        onClick={handleCopy}
+                        className="flex items-center gap-1 px-3 py-2 bg-orange-600 text-white rounded-lg text-sm font-semibold hover:bg-orange-700 transition flex-shrink-0"
+                      >
+                        {copied ? <><Check size={16} /> Copied!</> : <><Copy size={16} /> Copy</>}
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="mt-4 pt-4 border-t border-orange-200">
-                    <details className="group">
-                      <summary className="cursor-pointer text-sm text-gray-600 hover:text-gray-800 font-medium flex items-center gap-1">
-                        <Phone size={14} /> App မဖွင့်ဘူးလား? ဖုန်းနံပါတ်ကို ကြည့်ရန် နှိပ်ပါ
-                      </summary>
-                      <div className="mt-3 bg-white rounded-lg p-3 flex items-center justify-between border border-orange-200">
-                        <span className="text-xl font-bold text-gray-800 tracking-wider">{ADMIN_PHONE_DISPLAY}</span>
-                        <button
-                          type="button"
-                          onClick={handleCopy}
-                          className="flex items-center gap-1 px-3 py-2 bg-orange-600 text-white rounded-lg text-sm font-semibold hover:bg-orange-700 transition"
-                        >
-                          {copied ? <><Check size={16} /> Copied!</> : <><Copy size={16} /> Copy</>}
-                        </button>
-                      </div>
-                    </details>
+                  <div className="mt-4 bg-white rounded-lg p-4 text-sm text-gray-700 space-y-2">
+                    <p className="font-semibold text-gray-800 mb-2">📌 ငွေလွှဲနည်း:</p>
+                    <p>၁။ ဖုန်းနံပါတ်ကို <strong>Copy</strong> နှိပ်ပြီး ကူးယူပါ</p>
+                    <p>၂။ <strong>KPay</strong> သို့မဟုတ် <strong>WavePay</strong> App ကို ဖွင့်ပါ</p>
+                    <p>၃။ <strong>ငွေလွှဲ</strong> ကို ရွေးပြီး ဖုန်းနံပါတ်ကို Paste လုပ်ပါ</p>
+                    <p>၄။ ပမာဏ <strong className="text-orange-600">{getTotal()} MMK</strong> လွှဲပါ</p>
+                    <p>၅။ လွှဲပြီးရင် အောက်က <strong>Place Order</strong> ကို နှိပ်ပါ</p>
                   </div>
 
                   <p className="text-xs text-gray-500 mt-4 text-center">
-                    ⚠️ ငွေလွှဲပြီးရင် အောက်က Place Order ကို နှိပ်ပါ။ ကျွန်တော်တို့ ဖုန်းနဲ့ ဆက်သွယ်ပါမယ်။
+                    ⚠️ Order အတည်ပြုပြီးရင် ကျွန်တော်တို့ ဖုန်းနဲ့ ဆက်သွယ်ပါမယ်။
                   </p>
                 </div>
               )}
