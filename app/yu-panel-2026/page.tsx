@@ -1,15 +1,16 @@
 'use client';
 
-import Navbar from '@/components/Navbar';
 import { supabase } from '@/lib/supabase';
 import { useEffect, useState } from 'react';
-import { Trash2, Plus, Package } from 'lucide-react';
+import { Trash2, Plus, Package, LogOut, Upload, X } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface Product {
   id: string;
   name: string;
   price: number;
   image: string;
+  category: string;
 }
 
 interface Order {
@@ -24,14 +25,19 @@ interface Order {
   created_at: string;
 }
 
+const CATEGORIES = ['Chips', 'Chocolate', 'Drinks', 'Cookies', 'Popcorn', 'Other'];
+
 export default function AdminPage() {
+  const router = useRouter();
   const [tab, setTab] = useState<'products' | 'orders'>('products');
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [image, setImage] = useState('');
+  const [category, setCategory] = useState('Chips');
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
 
   async function fetchProducts() {
     const { data } = await supabase.from('products').select('*').order('created_at', { ascending: false });
@@ -49,17 +55,45 @@ export default function AdminPage() {
     fetchOrders();
   }, []);
 
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('products')
+      .upload(fileName, file);
+
+    if (uploadError) {
+      alert('Upload error: ' + uploadError.message);
+      setUploading(false);
+      return;
+    }
+
+    const { data } = supabase.storage.from('products').getPublicUrl(fileName);
+    setImage(data.publicUrl);
+    setUploading(false);
+  }
+
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     if (!name || !price) return alert('Please fill name and price.');
+    if (!image) return alert('Please upload a product image.');
+
     const { error } = await supabase.from('products').insert({
       name,
       price: Number(price),
-      image: image || 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?auto=format&fit=crop&w=500&q=60',
+      category,
+      image,
     });
+
     if (error) alert('Error: ' + error.message);
     else {
-      setName(''); setPrice(''); setImage('');
+      setName(''); setPrice(''); setImage(''); setCategory('Chips');
       fetchProducts();
     }
   }
@@ -75,24 +109,26 @@ export default function AdminPage() {
     fetchOrders();
   }
 
-  return (
-    <main className="min-h-screen bg-gray-50">
-      <Navbar />
-      <div className="container mx-auto px-4 py-12 max-w-5xl">
-        <h1 className="text-4xl font-bold text-gray-800 mb-8">Admin Dashboard</h1>
+  async function handleLogout() {
+    await fetch('/api/admin-logout', { method: 'POST' });
+    router.push('/yu-panel-2026/login');
+  }
 
-        {/* Tabs */}
+  return (
+    <div className="min-h-screen bg-gray-100">
+      <div className="bg-gray-900 text-white p-4 flex justify-between items-center">
+        <h1 className="text-xl font-bold">Admin Dashboard - Yu's Foodies</h1>
+        <button onClick={handleLogout} className="flex items-center gap-2 bg-red-500 px-4 py-2 rounded hover:bg-red-600">
+          <LogOut size={18} /> Logout
+        </button>
+      </div>
+
+      <div className="p-8 max-w-5xl mx-auto">
         <div className="flex gap-2 mb-6">
-          <button
-            onClick={() => setTab('products')}
-            className={`px-6 py-2 rounded-lg font-semibold transition ${tab === 'products' ? 'bg-orange-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
-          >
+          <button onClick={() => setTab('products')} className={`px-6 py-2 rounded-lg font-semibold transition ${tab === 'products' ? 'bg-orange-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}>
             Products
           </button>
-          <button
-            onClick={() => setTab('orders')}
-            className={`px-6 py-2 rounded-lg font-semibold transition flex items-center gap-2 ${tab === 'orders' ? 'bg-orange-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
-          >
+          <button onClick={() => setTab('orders')} className={`px-6 py-2 rounded-lg font-semibold transition flex items-center gap-2 ${tab === 'orders' ? 'bg-orange-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}>
             <Package size={18} /> Orders ({orders.length})
           </button>
         </div>
@@ -103,11 +139,50 @@ export default function AdminPage() {
               <h2 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
                 <Plus size={24} /> Add New Product
               </h2>
-              <form onSubmit={handleAdd} className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <input type="text" placeholder="Product Name" value={name} onChange={(e) => setName(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2" required />
-                <input type="number" placeholder="Price (MMK)" value={price} onChange={(e) => setPrice(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2" required />
-                <input type="text" placeholder="Image URL (optional)" value={image} onChange={(e) => setImage(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2" />
-                <button type="submit" className="md:col-span-3 bg-orange-600 text-white py-2 rounded-lg font-semibold hover:bg-orange-700 transition">Add Product</button>
+              <form onSubmit={handleAdd} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <input type="text" placeholder="Product Name" value={name} onChange={(e) => setName(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2" required />
+                  <input type="number" placeholder="Price (MMK)" value={price} onChange={(e) => setPrice(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2" required />
+                  <select value={category} onChange={(e) => setCategory(e.target.value)} className="border border-gray-300 rounded-lg px-4 py-2">
+                    {CATEGORIES.map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-gray-700 font-medium mb-2">Product Image</label>
+                  {image ? (
+                    <div className="relative inline-block">
+                      <img src={image} alt="Preview" className="w-40 h-40 object-cover rounded-lg border-2 border-orange-500" />
+                      <button
+                        type="button"
+                        onClick={() => setImage('')}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-orange-500 transition">
+                      <Upload size={32} className="text-gray-400 mb-2" />
+                      <span className="text-gray-500 text-sm">
+                        {uploading ? 'Uploading...' : 'Click to upload product photo'}
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                        disabled={uploading}
+                      />
+                    </label>
+                  )}
+                </div>
+
+                <button type="submit" disabled={uploading} className="w-full bg-orange-600 text-white py-2 rounded-lg font-semibold hover:bg-orange-700 transition disabled:opacity-50">
+                  Add Product
+                </button>
               </form>
             </div>
 
@@ -121,6 +196,7 @@ export default function AdminPage() {
                         <img src={product.image} alt={product.name} className="w-14 h-14 object-cover rounded" />
                         <div>
                           <h3 className="font-semibold text-gray-800">{product.name}</h3>
+                          <p className="text-sm text-gray-500">{product.category}</p>
                           <p className="text-sm text-orange-600 font-bold">{product.price} MMK</p>
                         </div>
                       </div>
@@ -152,11 +228,7 @@ export default function AdminPage() {
                       <div className="text-right">
                         <p className="text-xl font-bold text-orange-600">{order.total} MMK</p>
                         <p className="text-sm text-gray-600">{order.payment_method}</p>
-                        <span className={`inline-block mt-1 px-3 py-1 rounded-full text-xs font-semibold ${
-                          order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          order.status === 'delivered' ? 'bg-green-100 text-green-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
+                        <span className={`inline-block mt-1 px-3 py-1 rounded-full text-xs font-semibold ${order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : order.status === 'delivered' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
                           {order.status}
                         </span>
                       </div>
@@ -178,6 +250,6 @@ export default function AdminPage() {
           </div>
         )}
       </div>
-    </main>
+    </div>
   );
 }
